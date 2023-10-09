@@ -6,7 +6,7 @@ import UserTypeContext from '../contexts/UserTypeContext';
 import './reactCOIServiceWorker';
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [userRole, setUserRole] = useState('');
+  const [userRole, setUserRole] = useState,<string>('');
   return ( 
     <UserTypeContext.Provider value={{ userRole, setUserRole }}>
       <Component {...pageProps} />
