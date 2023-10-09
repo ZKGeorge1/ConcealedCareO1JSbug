@@ -1,4 +1,13 @@
 {
   "version": 1,
-  "deployAliases": {}
+  "deployAliases": {
+    "berkeley": {
+      "url": "https://proxy.berkeley.minaexplorer.com/graphql",
+      "keyPath": "keys/berkeley.json",
+      "feepayerKeyPath": "C:\\Users\\samue/.cache/zkapp-cli/keys/berkeley1.json",
+      "feepayerAlias": "berkeley1",
+      "fee": "0.1",
+      "smartContract": "ConcealedCare"
+    }
+  }
 }
