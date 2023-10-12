@@ -7,7 +7,7 @@ import UserTypeContext from '../contexts/UserTypeContext';
 import { FaUser, FaBuilding, FaStethoscope } from 'react-icons/fa';
 
 const NavigationBar = () => {
-  const { userRole } = useContext(UserTypeContext);
+  const {userRole} = useContext(UserTypeContext);
   return (
     <div className="sidenav flex-col flex w-48">
       <div><img id="logo" src="/assets/cc-logo.svg"></img></div>
@@ -54,7 +54,7 @@ const NavigationBar = () => {
 }
 
 const Header = () => {
-  const { userRole } = useContext(UserTypeContext);
+  const {userRole} = useContext(UserTypeContext);
   return (
     <div className="heading-container bg-main">
       {userRole === 'doctor' && <div className="profile-info text-lg large-font heading-font shrink-0 mx-5 mt-2 ">

@@ -1,7 +1,6 @@
 import {
   fetchAccount,
   PublicKey,
-  PrivateKey,
   Field,
 } from 'o1js'
 
@@ -12,8 +11,8 @@ export default class ZkappWorkerClient {
 
   // ---------------------------------------------------------------------------------------
 
-  loadO1js() {
-    return this._call('loadO1js', {});
+  loado1js() {
+    return this._call('loado1js', {});
   }
 
   setActiveInstanceToBerkeley() {

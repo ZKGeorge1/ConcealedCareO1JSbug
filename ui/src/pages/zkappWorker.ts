@@ -15,8 +15,8 @@ const state = {
 // ---------------------------------------------------------------------------------------
 
 const functions = {
-  loadO1js: async (args: {}) => {
-    await isReady;
+  loado1js: async (args: {}) => {
+;
   },
   setActiveInstanceToBerkeley: async (args: {}) => {
     const Berkeley = Mina.Network(
@@ -84,7 +84,7 @@ export type ZkappWorkerReponse = {
   id: number;
   data: any;
 };
-if (process.browser) {
+if (typeof window !== 'undefined') {
   addEventListener(
     'message',
     async (event: MessageEvent<ZkappWorkerRequest>) => {

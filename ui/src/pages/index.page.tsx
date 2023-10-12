@@ -3,23 +3,19 @@ import Head from 'next/head';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import {
-  Mina,
-  isReady,
   PublicKey,
-  fetchAccount,
   Field,
   Bool,
   Poseidon,
 } from 'o1js';
 import ZkappWorkerClient from './zkappWorkerClient';
 import { Report, Requirements } from '../../../contracts/src/ConcealedCare';
-import { ReportFormInput, RequirementsFormInput, buildReportFromFormInput, buildRequirementsFromFormInput, reportFromJson, requirementsFromJson } from "@/util";
+import { RequirementsFormInput, buildReportFromFormInput, buildRequirementsFromFormInput, reportFromJson, requirementsFromJson } from "@/util";
 import NewRequest from "./new-request.page";
 import AccomProof from "./accom-proof.page";
 import VerifyAccomProof from "./verify-accom-proof.page";
 
 let transactionFee = 0.1;
-
 
 export default function NewReport() {
   let [state, setState] = useState({
@@ -41,7 +37,7 @@ export default function NewReport() {
 
   async function publishReport(report: Report) {
     doShowOverlay()
-
+    
     myLog('Publishing medical report hash...');
 
     await state.zkappWorkerClient!.fetchAccount({
@@ -186,27 +182,26 @@ export default function NewReport() {
     const showEmployerBtn = document.getElementById('employerBtn');
     const showPatientBtn = document.getElementById('doctorBtn');
 
-    showDoctorBtn.addEventListener('click', () => {
+    showDoctorBtn?.addEventListener('click', () => {
       toggleVisibility('.doctor');
     });
 
-    showEmployerBtn.addEventListener('click', () => {
+    showEmployerBtn?.addEventListener('click', () => {
       toggleVisibility('.employer');
     });
 
-    showPatientBtn.addEventListener('click', () => {
+    showPatientBtn?.addEventListener('click', () => {
       toggleVisibility('.patient');
     });
 
     (async () => {
-      await isReady;
       doShowOverlay()
 
       if (!state.hasBeenSetup) {
         const zkappWorkerClient = new ZkappWorkerClient();
 
-        myLog('Loading O1JS...');
-        await zkappWorkerClient.loadO1JS();
+        myLog('Loading o1js...');
+        await zkappWorkerClient.loado1js();
         myLog('done');
 
         await zkappWorkerClient.setActiveInstanceToBerkeley();
@@ -235,7 +230,7 @@ export default function NewReport() {
         myLog('zkApp compiled');
 
         const zkappPublicKey = PublicKey.fromBase58(
-          'B62qmYXReS5MVF5fZzR8pEtPwjA4zFkzMZJ5N4pmFsEEBS8RbGbAoLZ'
+          'B62qmuVEzJ94c8etgxJYAocTQ6zt4T3i3Z2k3N8x3qQKdP6Zjv1rpDF'
         );
 
         await zkappWorkerClient.initZkappInstance(zkappPublicKey);
@@ -264,14 +259,15 @@ export default function NewReport() {
     })();
   }, []);
 
-  const toggleVisibility = (visibleClass) => {
+  const toggleVisibility = (visibleClass: any) => {
     const doctorDiv = document.querySelector('.doctor');
     const employerDiv = document.querySelector('.employer');
     const patientDiv = document.querySelector('.patient');
+  
 
-    doctorDiv.classList.remove('visible');
-    employerDiv.classList.remove('visible');
-    patientDiv.classList.remove('visible');
+    doctorDiv?.classList.remove('visible');
+    employerDiv?.classList.remove('visible');
+    patientDiv?.classList.remove('visible');
 
     document.querySelector(visibleClass).classList.add('visible');
   };
