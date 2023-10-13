@@ -462,7 +462,7 @@ export default function NewReport() {
         <VerifyAccomProof submitVerifyAccomProof={submitVerifyAccomProof} />
         {form4output && (<>
           <h1>Accomodation proof verified!</h1>
-          {/* <a className="my-5" href={'https://berkeley.minaexplorer.com/transaction/' + state.hash}><code>{state.hash}</code></a> */}
+          { <a className="my-5" href={'https://berkeley.minaexplorer.com/transaction/' + state.hash}><code>{state.hash}</code></a> }
         </>)}
 
         </div>
