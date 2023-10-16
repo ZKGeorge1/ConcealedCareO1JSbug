@@ -1,9 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    "C:/Users/samue/ConcealedCareO1JS/ui/src/styles/globals.css.{js,ts,jsx,tsx,mdx}",
+    "C:/Users/samue/ConcealedCareO1JS/ui/src/styles/styles.css.{js,ts,jsx,tsx,mdx}",
+    "C:/Users/samue/ConcealedCareO1JS/ui/src/styles/index.css.{js,ts,jsx,tsx,mdx}",
+    "C:/Users/samue/ConcealedCareO1JS/ui/src/styles/Sidebar.css.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {

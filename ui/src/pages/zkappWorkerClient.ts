@@ -1,19 +1,15 @@
-import {
-  fetchAccount,
-  PublicKey,
-  Field,
-} from 'o1js'
-
-import type { ZkappWorkerRequest, ZkappWorkerReponse, WorkerFunctions } from './zkappWorker';
+import {fetchAccount, PublicKey, Field,} from 'o1js'
+import type {
+   ZkappWorkerRequest, 
+   ZkappWorkerReponse, 
+   WorkerFunctions } 
+   from './zkappWorker';
+   
 import { Report, Requirements } from '../../../contracts/src/ConcealedCare';
 
 export default class ZkappWorkerClient {
 
   // ---------------------------------------------------------------------------------------
-
-  loado1js() {
-    return this._call('loado1js', {});
-  }
 
   setActiveInstanceToBerkeley() {
     return this._call('setActiveInstanceToBerkeley', {});
@@ -27,13 +23,21 @@ export default class ZkappWorkerClient {
     return this._call('compileContract', {});
   }
 
-  fetchAccount({ publicKey }: { publicKey: PublicKey }): ReturnType<typeof fetchAccount> {
-    const result = this._call('fetchAccount', { publicKey58: publicKey.toBase58() });
-    return (result as ReturnType<typeof fetchAccount>);
+  fetchAccount({ 
+    publicKey,
+   }: { 
+    publicKey: PublicKey;
+   }): ReturnType<typeof fetchAccount> {
+    const result = this._call('fetchAccount', { 
+      publicKey58: publicKey.toBase58(),
+     });
+    return result as ReturnType<typeof fetchAccount>;
   }
 
   initZkappInstance(publicKey: PublicKey) {
-    return this._call('initZkappInstance', { publicKey58: publicKey.toBase58() });
+    return this._call('initZkappInstance', {
+       publicKey58: publicKey.toBase58() 
+      });
   }
 
   async getRequirementsHash(): Promise<Field> {
@@ -72,7 +76,7 @@ export default class ZkappWorkerClient {
 
   constructor() {
     this.worker = new Worker(new URL('./zkappWorker.ts', import.meta.url))
-    this.promises = {};
+    this.promises = {}; 
     this.nextId = 0;
 
     this.worker.onmessage = (event: MessageEvent<ZkappWorkerReponse>) => {

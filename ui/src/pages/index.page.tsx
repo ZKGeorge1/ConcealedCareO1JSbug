@@ -14,6 +14,8 @@ import { RequirementsFormInput, buildReportFromFormInput, buildRequirementsFromF
 import NewRequest from "./new-request.page";
 import AccomProof from "./accom-proof.page";
 import VerifyAccomProof from "./verify-accom-proof.page";
+import './reactCOIServiceWorker';
+import styles from '../../../ui/src/styles/Home.module.css';
 
 let transactionFee = 0.1;
 
@@ -30,14 +32,108 @@ export default function NewReport() {
     hash: ""
   });
 
+  const [displayText, setDisplayText] = useState("");
+  const [transactionlink, setTransactionLink] = useState("");
   let [form1output, setForm1output] = useState("")
   let [form2output, setForm2output] = useState("")
   let [form3output, setForm3output] = useState("")
   let [form4output, setForm4output] = useState("")
 
+  useEffect(() => {
+    async function timeout(seconds: number): Promise<void> {
+      return new Promise<void>((resolve) => {
+        setTimeout(() => {
+          resolve();
+        }, seconds * 1000);
+      });
+    }
+
+    (async () => {
+      
+      if (!state.hasBeenSetup) {
+        setDisplayText('Loading web worker...');
+        console.log('Loading web worker...');
+        const zkappWorkerClient = new ZkappWorkerClient();
+        await timeout(5);
+
+        setDisplayText('Done loading web worker');
+        console.log('Done loading web worker');
+
+        await zkappWorkerClient.setActiveInstanceToBerkeley();
+
+        const mina = (window as any).mina;
+
+        if (mina == null) {
+          setState({ ...state, hasWallet: false });
+          return;
+        }
+
+        const publicKeyBase58: string = (await mina.requestAccounts())[0];
+        const publicKey = PublicKey.fromBase58(publicKeyBase58);
+        
+        console.log('public key: ', publicKey.toBase58());
+
+        console.log('checking if account exists...');
+
+        const res = await zkappWorkerClient.fetchAccount({
+          publicKey: publicKey!,
+        });
+        const accountExists = res.error == null;
+
+        await zkappWorkerClient.loadContract();
+
+        console.log('Compiling zkApp...');
+        await zkappWorkerClient.compileContract();
+        console.log('zkApp compiled');
+
+        const zkappPublicKey = PublicKey.fromBase58(
+          'B62qoEMjuBPUhyqzmvX2hnTfBM1awk7nvXX1mi4e6BQUgpJ6MHWxezN'
+        );
+
+        await zkappWorkerClient.initZkappInstance(zkappPublicKey);
+
+        console.log('Getting zkApp state...');
+        await zkappWorkerClient.fetchAccount({ publicKey: zkappPublicKey });
+        const currentNum = await zkappWorkerClient.getRequirementsHash();
+        console.log('READY!')
+        doHideOverlay()
+
+        setState({
+          ...state,
+          zkappWorkerClient,
+          hasWallet: true,
+          hasBeenSetup: true,
+          publicKey,
+          zkappPublicKey,
+          accountExists,
+          currentNum,
+        });
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (state.hasBeenSetup && !state.accountExists) {
+        for (;;) {
+          setDisplayText('Checking if fee payer account exists...');
+          console.log('Checking if fee payer account exists...');
+          const res = await state.zkappWorkerClient!.fetchAccount({
+            publicKey: state.publicKey!,
+          });
+          const accountExists = res.error == null;
+          if (accountExists) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+        setState({ ...state, accountExists: true });
+      }
+    })();
+  }, [state.hasBeenSetup]);
+
   async function publishReport(report: Report) {
     doShowOverlay()
-    
     myLog('Publishing medical report hash...');
 
     await state.zkappWorkerClient!.fetchAccount({
@@ -63,12 +159,13 @@ export default function NewReport() {
       },
     });
 
-    myLog(
-      'See transaction at https://berkeley.minaexplorer.com/transaction/' + hash
-    );
-    doHideOverlay()
 
+    const transactionLink = `https://berkeley.minaexplorer.com/transaction/${hash}`;
+    console.log(`View transaction at ${transactionLink}`);
 
+    setTransactionLink(transactionLink);
+    setDisplayText(transactionLink);
+    
     setState({ ...state, creatingTransaction: false, hash: hash });
     setForm1output(JSON.stringify(report, null, 2))
   }
@@ -146,33 +243,33 @@ export default function NewReport() {
 
 
 
-      // await state.zkappWorkerClient!.createVerifyAccomProofTransaction(requirements);
+       await state.zkappWorkerClient!.createVerifyAccomProofTransaction(requirements);
 
-      // await state.zkappWorkerClient!.proveTransaction();
+       await state.zkappWorkerClient!.proveTransaction();
 
-      // myLog('getting transaction JSON...');
-      // const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
+       myLog('getting transaction JSON...');
+       const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
 
-      // myLog('requesting send transaction...');
-      // var { hash } = await (window as any).mina.sendTransaction({
-      //   transaction: transactionJSON,
-      //   feePayer: {
-      //     fee: transactionFee,
-      //     memo: '',
-      //   },
-      // });
+       myLog('requesting send transaction...');
+       var { hash } = await (window as any).mina.sendTransaction({
+         transaction: transactionJSON,
+         feePayer: {
+           fee: transactionFee,
+           memo: '',
+         },
+       });
 
     } catch (e) {
       alert('failed to verify proof: ' + e)
     }
 
-    // myLog(
-    //   'See transaction at https://berkeley.minaexplorer.com/transaction/' + hash
-    // );
+     myLog(
+       'See transaction at https://berkeley.minaexplorer.com/transaction/' + hash
+     );
     doHideOverlay()
 
 
-    // setState({ ...state, creatingTransaction: false, hash: hash });
+     setState({ ...state, creatingTransaction: false, hash: hash });
     setForm4output("ok")
   }
 
@@ -193,71 +290,7 @@ export default function NewReport() {
     showPatientBtn?.addEventListener('click', () => {
       toggleVisibility('.patient');
     });
-
-    (async () => {
-      doShowOverlay()
-
-      if (!state.hasBeenSetup) {
-        const zkappWorkerClient = new ZkappWorkerClient();
-
-        myLog('Loading o1js...');
-        await zkappWorkerClient.loado1js();
-        myLog('done');
-
-        await zkappWorkerClient.setActiveInstanceToBerkeley();
-
-        const mina = (window as any).mina;
-
-        if (mina == null) {
-          setState({ ...state, hasWallet: false });
-          return;
-        }
-        const publicKeyBase58: string = (await mina.requestAccounts())[0];
-        const publicKey = PublicKey.fromBase58(publicKeyBase58);
-
-        myLog('public key: ', publicKey.toBase58());
-
-        myLog('checking if account exists...');
-        const res = await zkappWorkerClient.fetchAccount({
-          publicKey: publicKey!,
-        });
-        const accountExists = res.error == null;
-
-        await zkappWorkerClient.loadContract();
-
-        myLog('compiling zkApp');
-        await zkappWorkerClient.compileContract();
-        myLog('zkApp compiled');
-
-        const zkappPublicKey = PublicKey.fromBase58(
-          'B62qmuVEzJ94c8etgxJYAocTQ6zt4T3i3Z2k3N8x3qQKdP6Zjv1rpDF'
-        );
-
-        await zkappWorkerClient.initZkappInstance(zkappPublicKey);
-
-        myLog('getting zkApp state...');
-        await zkappWorkerClient.fetchAccount({ publicKey: zkappPublicKey });
-        myLog('READY!')
-        doHideOverlay()
-        // const currentNum = await zkappWorkerClient.getNum();
-        // myLog('current state:', currentNum.toString());
-
-        setState({
-          ...state,
-          zkappWorkerClient,
-          hasWallet: true,
-          hasBeenSetup: true,
-          publicKey,
-          zkappPublicKey,
-          accountExists,
-          // currentNum,
-        });
-
-      }
-
-
-    })();
-  }, []);
+      },)
 
   const toggleVisibility = (visibleClass: any) => {
     const doctorDiv = document.querySelector('.doctor');
@@ -310,6 +343,41 @@ export default function NewReport() {
   function submitVerifyAccomProof(requirementsJsonString: string) {
     publishVerifyAccomProof(requirementsFromJson(requirementsJsonString))
   }
+
+  // Create UI elements
+
+  let hasWallet;
+  if (state.hasWallet != null && !state.hasWallet) {
+    const auroLink = 'https://www.aurowallet.com/';
+    const auroLinkElem = (
+      <a href={auroLink} target="_blank" rel="noreferrer">
+        Install Auro wallet here
+      </a>
+    );
+    hasWallet = (
+      <div>
+        Could not find a wallet. {auroLinkElem}
+      </div>
+    );
+  }
+
+  const stepDisplay = transactionlink ? (
+    <a href={displayText} target="_blank" rel="noreferrer">
+      View transaction
+    </a>
+  ) : (
+    displayText
+  );
+
+  let setup = (
+    <div
+      className={styles.start}
+      style={{ fontWeight: 'bold', fontSize: '1.5rem', paddingBottom: '5rem' }}
+    >
+      {stepDisplay}
+      {hasWallet}
+    </div>
+  );
 
   return (
     <div className="App bg-white-50 dark:bg-zinc-900">

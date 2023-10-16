@@ -8,6 +8,14 @@
       "feepayerAlias": "test101",
       "fee": "0.1",
       "smartContract": "ConcealedCare"
+    },
+    "berkeley": {
+      "url": "https://proxy.berkeley.minaexplorer.com/graphql",
+      "keyPath": "keys/berkeley.json",
+      "feepayerKeyPath": "C:\\Users\\samue/.cache/zkapp-cli/keys/03-deployberkeley.json",
+      "feepayerAlias": "03-deployberkeley",
+      "fee": "0.1",
+      "smartContract": "ConcealedCare"
     }
   }
 }
