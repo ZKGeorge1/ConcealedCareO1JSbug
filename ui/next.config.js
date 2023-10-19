@@ -43,8 +43,8 @@ const nextConfig = {
    * The 'ghp-postbuild.js' script in this project prepends the repo name to asset urls in the built css files 
    * after runing 'npm run deploy'.
    */
-  basePath: process.env.NODE_ENV === 'production' ? '/Framework' : '', // update if your repo name changes for 'npm run deploy' to work successfully
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/Framework/' : '', // update if your repo name changes for 'npm run deploy' to work successfully
+  basePath: process.env.NODE_ENV === 'production' ? '/ConcealedCareO1JS' : '', // update if your repo name changes for 'npm run deploy' to work successfully
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/ConcealedCareO1JS/' : '', // update if your repo name changes for 'npm run deploy' to work successfully
 };
 
 module.exports = nextConfig
