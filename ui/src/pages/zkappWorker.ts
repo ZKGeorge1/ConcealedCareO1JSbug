@@ -1,4 +1,4 @@
-import { Mina, isReady, PublicKey, fetchAccount } from 'o1js';
+import { Mina, PublicKey, fetchAccount } from 'o1js';
 
 type Transaction = Awaited<ReturnType<typeof Mina.transaction>>;
 
@@ -15,13 +15,11 @@ const state = {
 // ---------------------------------------------------------------------------------------
 
 const functions = {
-  loado1js: async (args: {}) => {
-;
-  },
   setActiveInstanceToBerkeley: async (args: {}) => {
     const Berkeley = Mina.Network(
       'https://proxy.berkeley.minaexplorer.com/graphql'
     );
+    console.log('Berkeley Instance Created');
     Mina.setActiveInstance(Berkeley);
   },
   loadContract: async (args: {}) => {
@@ -40,8 +38,8 @@ const functions = {
     state.zkapp = new state.ConcealedCare!(publicKey);
   },
   getRequirementsHash: async (args: {}) => {
-    const currentNum = await state.zkapp!.verifiedRequirementsHash.fetch();
-    return JSON.stringify(currentNum!.toJSON());
+    const currentRequirementsHash = await state.zkapp!.verifiedRequirementsHash.fetch();
+    return JSON.stringify(currentRequirementsHash!.toJSON());
   },
   createPublishReportTransaction: async (args: { report: Report }) => {
     const transaction = await Mina.transaction(() => {
@@ -84,6 +82,7 @@ export type ZkappWorkerReponse = {
   id: number;
   data: any;
 };
+
 if (typeof window !== 'undefined') {
   addEventListener(
     'message',

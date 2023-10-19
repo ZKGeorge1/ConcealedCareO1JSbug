@@ -16,6 +16,14 @@
       "feepayerAlias": "03-deployberkeley",
       "fee": "0.1",
       "smartContract": "ConcealedCare"
+    },
+    "17_10_23": {
+      "url": "https://proxy.berkeley.minaexplorer.com/graphql",
+      "keyPath": "keys/17_10_23.json",
+      "feepayerKeyPath": "C:\\Users\\samue/.cache/zkapp-cli/keys/03-deployberkeley.json",
+      "feepayerAlias": "03-deployberkeley",
+      "fee": "0.1",
+      "smartContract": "ConcealedCare"
     }
   }
 }

@@ -7,7 +7,9 @@ import {
   Field,
   Bool,
   Poseidon,
+  fetchAccount,
 } from 'o1js';
+
 import ZkappWorkerClient from './zkappWorkerClient';
 import { Report, Requirements } from '../../../contracts/src/ConcealedCare';
 import { RequirementsFormInput, buildReportFromFormInput, buildRequirementsFromFormInput, reportFromJson, requirementsFromJson } from "@/util";
@@ -75,9 +77,10 @@ export default function NewReport() {
 
         console.log('checking if account exists...');
 
-        const res = await zkappWorkerClient.fetchAccount({
+        const res = await fetchAccount({
           publicKey: publicKey!,
         });
+
         const accountExists = res.error == null;
 
         await zkappWorkerClient.loadContract();
@@ -87,7 +90,7 @@ export default function NewReport() {
         console.log('zkApp compiled');
 
         const zkappPublicKey = PublicKey.fromBase58(
-          'B62qoEMjuBPUhyqzmvX2hnTfBM1awk7nvXX1mi4e6BQUgpJ6MHWxezN'
+          'console.log("Public key",  publicKeyBase58)'
         );
 
         await zkappWorkerClient.initZkappInstance(zkappPublicKey);
