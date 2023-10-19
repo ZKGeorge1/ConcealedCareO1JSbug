@@ -84,7 +84,7 @@ let sentTx;
 console.log('compile the contract...');
 await ConcealedCare.compile();
 try {
-  const useProof = false;
+  const useProof = true;
 
   const Local = Mina.LocalBlockchain({ proofsEnabled: useProof });
   Mina.setActiveInstance(Local);
