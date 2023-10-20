@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import {
   PublicKey,
+  PrivateKey,
   Field,
   Bool,
   Poseidon,
@@ -19,10 +20,11 @@ import VerifyAccomProof from "./verify-accom-proof.page";
 import './reactCOIServiceWorker';
 import styles from '../../../ui/src/styles/Home.module.css';
 
-let transactionFee = 0.1;
+const transactionFee = 100_000_000;
+
 
 export default function NewReport() {
-  let [state, setState] = useState({
+  const [state, setState] = useState({
     zkappWorkerClient: null as null | ZkappWorkerClient,
     hasWallet: null as null | boolean,
     hasBeenSetup: false,
@@ -34,6 +36,7 @@ export default function NewReport() {
     hash: ""
   });
 
+  
   const [displayText, setDisplayText] = useState("");
   const [transactionlink, setTransactionLink] = useState("");
   let [form1output, setForm1output] = useState("")
@@ -41,27 +44,24 @@ export default function NewReport() {
   let [form3output, setForm3output] = useState("")
   let [form4output, setForm4output] = useState("")
 
-  useEffect(() => {
-    async function timeout(seconds: number): Promise<void> {
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, seconds * 1000);
-      });
-    }
+  async function timeout(seconds: number): Promise<void> {
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, seconds * 1000);
+    });
+  }
 
+  useEffect(() => {
     (async () => {
-      
       if (!state.hasBeenSetup) {
         setDisplayText('Loading web worker...');
         console.log('Loading web worker...');
         const zkappWorkerClient = new ZkappWorkerClient();
         await timeout(5);
-
-        setDisplayText('Done loading web worker');
         console.log('Done loading web worker');
 
-        await zkappWorkerClient.setActiveInstanceToBerkeley();
+        zkappWorkerClient.setActiveInstanceToBerkeley();
 
         const mina = (window as any).mina;
 
@@ -81,7 +81,6 @@ export default function NewReport() {
           publicKey: publicKey!,
         });
 
-        const accountExists = res.error == null;
 
         await zkappWorkerClient.loadContract();
 
@@ -90,7 +89,7 @@ export default function NewReport() {
         console.log('zkApp compiled');
 
         const zkappPublicKey = PublicKey.fromBase58(
-          'console.log("Public key",  publicKeyBase58)'
+          'B62qoEMjuBPUhyqzmvX2hnTfBM1awk7nvXX1mi4e6BQUgpJ6MHWxezN'
         );
 
         await zkappWorkerClient.initZkappInstance(zkappPublicKey);
@@ -108,7 +107,6 @@ export default function NewReport() {
           hasBeenSetup: true,
           publicKey,
           zkappPublicKey,
-          accountExists,
           currentNum,
         });
       }
@@ -139,38 +137,39 @@ export default function NewReport() {
     doShowOverlay()
     myLog('Publishing medical report hash...');
 
-    await state.zkappWorkerClient!.fetchAccount({
-      publicKey: state.publicKey!,
-    });
+    if (state.zkappWorkerClient) {  
+      state.zkappWorkerClient!.fetchAccount({ publicKey: state.publicKey!,
+});
+      
+      try {
+       await state.zkappWorkerClient.createPublishReportTransaction(report);
+       myLog('creating transaction...');
+       catch (e)
+      }
 
+      myLog('creating proof...');
+        await state.zkappWorkerClient!.proveTransaction();
 
-    myLog('creating transaction...');
-    await state.zkappWorkerClient!.createPublishReportTransaction(report);
+      const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
 
-    myLog('creating proof...');
-    await state.zkappWorkerClient!.proveTransaction();
-
-    myLog('getting transaction JSON...');
-    const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
-
-    myLog('requesting send transaction...');
-    const { hash } = await (window as any).mina.sendTransaction({
+      myLog('requesting send transaction...');
+      const { hash } = await (window as any).mina.sendTransaction({
       transaction: transactionJSON,
       feePayer: {
-        fee: transactionFee,
-        memo: '',
-      },
-    });
+      fee: transactionFee,
+      memo: ''}
+      })
+      
+      const transactionLink = `https://berkeley.minaexplorer.com/transaction/${hash}`;
+      console.log(`View transaction at ${transactionLink}`);
 
-
-    const transactionLink = `https://berkeley.minaexplorer.com/transaction/${hash}`;
-    console.log(`View transaction at ${transactionLink}`);
-
-    setTransactionLink(transactionLink);
+      setTransactionLink(transactionLink);
     setDisplayText(transactionLink);
     
     setState({ ...state, creatingTransaction: false, hash: hash });
     setForm1output(JSON.stringify(report, null, 2))
+
+    };
   }
 
   async function publishAccomProof(report: Report, requirements: Requirements) {

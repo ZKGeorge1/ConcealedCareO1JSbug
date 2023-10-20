@@ -97,3 +97,4 @@ if (typeof window !== 'undefined') {
     }
   );
 }
+console.log('Web Worker Successfully Initialized.');

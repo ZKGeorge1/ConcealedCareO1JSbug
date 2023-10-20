@@ -1,5 +1,5 @@
 import { Bool, Field } from "o1js";
-import { Report, Requirements } from "../../contracts/src/ConcealedCare";
+import { Report, Requirements } from '../../contracts/src/ConcealedCare';
 
 export function hashPatientId(inputStr: string) {
   // Convert the input string to an integer

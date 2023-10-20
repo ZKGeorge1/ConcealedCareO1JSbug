@@ -12,9 +12,9 @@
     "deploy": "next build && next export && type nul > out\\.nojekyll && node ./ghp-postbuild && git add -f out && git commit -m \"Deploy gh-pages\" && cd .. && git subtree push --prefix ui/out origin gh-pages"
   },
   "dependencies": {
-    "@types/node": "20.6.3",
     "@types/react": "18.2.22",
     "@types/react-dom": "18.2.7",
+    "@types/node": "20.8.7",
     "autoprefixer": "10.4.16",
     "coi-serviceworker": "^0.1.7",
     "eslint": "8.50.0",
