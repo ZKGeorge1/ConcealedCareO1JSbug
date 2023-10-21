@@ -1,4 +1,4 @@
-import {fetchAccount, PublicKey, Field,} from 'o1js'
+import {fetchAccount, PublicKey, PrivateKey, Field,} from 'o1js'
 import type {
    ZkappWorkerRequest, 
    ZkappWorkerReponse, 
@@ -8,9 +8,10 @@ import type {
 import { Report, Requirements } from '../../../contracts/src/ConcealedCare';
 
 export default class ZkappWorkerClient {
-
+  getNum: any;
+  
   // ---------------------------------------------------------------------------------------
-
+  
   setActiveInstanceToBerkeley() {
     return this._call('setActiveInstanceToBerkeley', {});
   }
@@ -31,7 +32,7 @@ export default class ZkappWorkerClient {
     const result = this._call('fetchAccount', { 
       publicKey58: publicKey.toBase58(),
      });
-    return result as ReturnType<typeof fetchAccount>;
+    return (result as ReturnType<typeof fetchAccount>);
   }
 
   initZkappInstance(publicKey: PublicKey) {
@@ -75,7 +76,7 @@ export default class ZkappWorkerClient {
   nextId: number;
 
   constructor() {
-    this.worker = new Worker(new URL('./zkappWorker.ts', import.meta.url))
+    this.worker = new Worker(new URL('./zkappWorker', import.meta.url))
     this.promises = {}; 
     this.nextId = 0;
 

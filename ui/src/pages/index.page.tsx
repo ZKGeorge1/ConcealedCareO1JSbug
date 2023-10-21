@@ -1,7 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import Head from 'next/head';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   PublicKey,
   PrivateKey,
@@ -61,7 +61,7 @@ export default function NewReport() {
         await timeout(5);
         console.log('Done loading web worker');
 
-        zkappWorkerClient.setActiveInstanceToBerkeley();
+        await zkappWorkerClient.setActiveInstanceToBerkeley();
 
         const mina = (window as any).mina;
 
@@ -77,11 +77,10 @@ export default function NewReport() {
 
         console.log('checking if account exists...');
 
-        const res = await fetchAccount({
+        const res = await zkappWorkerClient.fetchAccount({
           publicKey: publicKey!,
         });
-
-
+        const accountExists = res.error != null;
         await zkappWorkerClient.loadContract();
 
         console.log('Compiling zkApp...');
@@ -89,16 +88,15 @@ export default function NewReport() {
         console.log('zkApp compiled');
 
         const zkappPublicKey = PublicKey.fromBase58(
-          'B62qoEMjuBPUhyqzmvX2hnTfBM1awk7nvXX1mi4e6BQUgpJ6MHWxezN'
+          'B62qjbeKHak9AnVUg1foeDxmnAUYDa3AxVR4mNTytqFTmPZ7L5aUjdn'
         );
 
         await zkappWorkerClient.initZkappInstance(zkappPublicKey);
 
         console.log('Getting zkApp state...');
         await zkappWorkerClient.fetchAccount({ publicKey: zkappPublicKey });
-        const currentNum = await zkappWorkerClient.getRequirementsHash();
-        console.log('READY!')
-        doHideOverlay()
+        const currentNum = await zkappWorkerClient.getNum();
+        console.log('current state:', currentNum.toString());
 
         setState({
           ...state,
@@ -108,6 +106,7 @@ export default function NewReport() {
           publicKey,
           zkappPublicKey,
           currentNum,
+          accountExists
         });
       }
     })();
@@ -116,7 +115,10 @@ export default function NewReport() {
   useEffect(() => {
     (async () => {
       if (state.hasBeenSetup && !state.accountExists) {
-        for (;;) {
+        let attempts = 0;
+      const maxAttempts = 10;
+
+      while (attempts < maxAttempts) {
           setDisplayText('Checking if fee payer account exists...');
           console.log('Checking if fee payer account exists...');
           const res = await state.zkappWorkerClient!.fetchAccount({
@@ -126,52 +128,50 @@ export default function NewReport() {
           if (accountExists) {
             break;
           }
+          attempts++;
           await new Promise((resolve) => setTimeout(resolve, 5000));
+            // If reached maximum attempts, inform the user and break the loop.
+        if (attempts === maxAttempts) {
+          console.log('Max attempts reached. Stopping account check.');
+          setDisplayText('Max attempts reached. Please check manually.');
+         } 
         }
         setState({ ...state, accountExists: true });
       }
     })();
   }, [state.hasBeenSetup]);
 
-  async function publishReport(report: Report) {
-    doShowOverlay()
-    myLog('Publishing medical report hash...');
+  const onSendTransaction = async () => {
+    setState({ ...state, creatingTransaction: true });
+    console.log('Sending a transaction...');
 
-    if (state.zkappWorkerClient) {  
-      state.zkappWorkerClient!.fetchAccount({ publicKey: state.publicKey!,
-});
-      
-      try {
-       await state.zkappWorkerClient.createPublishReportTransaction(report);
-       myLog('creating transaction...');
-       catch (e)
-      }
+    await state.zkappWorkerClient!.fetchAccount({ publicKey: state.publicKey! });
 
-      myLog('creating proof...');
-        await state.zkappWorkerClient!.proveTransaction();
+    await state.zkappWorkerClient!.createPublishReportTransaction(report);
+        
+    myLog('Creating proof...');
+    await state.zkappWorkerClient!.proveTransaction();
 
-      const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
+        myLog('Retrieving transaction JSON...');
+        const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
 
-      myLog('requesting send transaction...');
-      const { hash } = await (window as any).mina.sendTransaction({
-      transaction: transactionJSON,
-      feePayer: {
-      fee: transactionFee,
-      memo: ''}
-      })
-      
-      const transactionLink = `https://berkeley.minaexplorer.com/transaction/${hash}`;
-      console.log(`View transaction at ${transactionLink}`);
+        myLog('Initiating send transaction...');
+        const { hash } = await (window as any).mina.sendTransaction({
+            transaction: transactionJSON,
+            feePayer: {
+                fee: transactionFee,
+                memo: ''
+            }
+        });
 
-      setTransactionLink(transactionLink);
-    setDisplayText(transactionLink);
+        console.log(
+          "See transaction at https://berkeley.minaexplorer.com/transaction/" + hash
+        );
     
-    setState({ ...state, creatingTransaction: false, hash: hash });
-    setForm1output(JSON.stringify(report, null, 2))
-
-    };
-  }
-
+        setState({ ...state, creatingTransaction: false });
+      };
+    
+  
   async function publishAccomProof(report: Report, requirements: Requirements) {
     doShowOverlay()
 
@@ -220,21 +220,21 @@ export default function NewReport() {
 
     myLog('Verifying accommodation proof...');
 
-    await state.zkappWorkerClient!.fetchAccount({
-      publicKey: state.publicKey!,
-    });
+    if (state.zkappWorkerClient) {  
+      await state.zkappWorkerClient!.fetchAccount({ publicKey: state.publicKey!,});
+}
 
-    try {
-      const curRequirementsHash = await state.zkappWorkerClient!.getRequirementsHash()
-      const expectedRequirementsHash = Poseidon.hash([
-        new Field(requirements.patientIdHash),
-        new Field(requirements.verifyTime),
-        new Field(requirements.minBloodPressure),
-        new Field(requirements.maxBloodPressure),
-        new Bool(requirements.allowConditionA).toField(),
-        new Bool(requirements.allowConditionB).toField(),
-        new Bool(requirements.allowConditionC).toField(),
-      ])
+try {
+  const curRequirementsHash = await state.zkappWorkerClient!.getRequirementsHash();
+  const expectedRequirementsHash = Poseidon.hash([
+    new Field(requirements.patientIdHash),
+    new Field(requirements.verifyTime),
+    new Field(requirements.minBloodPressure),
+    new Field(requirements.maxBloodPressure),
+    new Bool(requirements.allowConditionA).toField(),
+    new Bool(requirements.allowConditionB).toField(),
+    new Bool(requirements.allowConditionC).toField(),
+  ])
 
       if (JSON.stringify(curRequirementsHash) != JSON.stringify(expectedRequirementsHash)) {
         alert('FAILED TO VERIFY!')
@@ -348,20 +348,32 @@ export default function NewReport() {
 
   // Create UI elements
 
-  let hasWallet;
+   let hasWallet;
   if (state.hasWallet != null && !state.hasWallet) {
     const auroLink = 'https://www.aurowallet.com/';
     const auroLinkElem = (
       <a href={auroLink} target="_blank" rel="noreferrer">
-        Install Auro wallet here
+        {' '}
+        [Link]{' '}
       </a>
     );
     hasWallet = (
       <div>
-        Could not find a wallet. {auroLinkElem}
+        {' '}
+        Could not find a wallet. Install Auro wallet here: {auroLinkElem}
       </div>
     );
   }
+
+  let setupText = state.hasBeenSetup
+  ? 'SnarkyJS Ready'
+  : 'Setting up SnarkyJS...';
+let setup = (
+  <div>
+    {' '}
+    {setupText} {hasWallet}
+  </div>
+);
 
   const stepDisplay = transactionlink ? (
     <a href={displayText} target="_blank" rel="noreferrer">
@@ -371,15 +383,19 @@ export default function NewReport() {
     displayText
   );
 
-  let setup = (
-    <div
-      className={styles.start}
-      style={{ fontWeight: 'bold', fontSize: '1.5rem', paddingBottom: '5rem' }}
-    >
-      {stepDisplay}
-      {hasWallet}
-    </div>
-  );
+  let accountDoesNotExist;
+  if (state.hasBeenSetup && !state.accountExists) {
+    const faucetLink =
+      'https://faucet.minaprotocol.com/?address=' + state.publicKey!.toBase58();
+    accountDoesNotExist = (
+      <div>
+        Account does not exist. 
+        <a href={faucetLink} target="_blank" rel="noreferrer">
+           Visit the faucet to fund this fee payer account
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="App bg-white-50 dark:bg-zinc-900">
@@ -584,5 +600,5 @@ export default function NewReport() {
 
 
   );
-
+        
 };

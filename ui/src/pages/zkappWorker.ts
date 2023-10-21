@@ -15,18 +15,18 @@ const state = {
 // ---------------------------------------------------------------------------------------
 
 const functions = {
-  setActiveInstanceToBerkeley: async (args: {}) => {
+  setActiveInstanceToBerkeley: async () => {
     const Berkeley = Mina.Network(
       'https://proxy.berkeley.minaexplorer.com/graphql'
     );
     console.log('Berkeley Instance Created');
     Mina.setActiveInstance(Berkeley);
   },
-  loadContract: async (args: {}) => {
+  loadContract: async () => {
     const { ConcealedCare } = await import('../../../contracts/build/src/ConcealedCare.js');
     state.ConcealedCare = ConcealedCare;
   },
-  compileContract: async (args: {}) => {
+  compileContract: async () => {
     await state.ConcealedCare!.compile();
   },
   fetchAccount: async (args: { publicKey58: string }) => {
@@ -38,8 +38,8 @@ const functions = {
     state.zkapp = new state.ConcealedCare!(publicKey);
   },
   getRequirementsHash: async (args: {}) => {
-    const currentRequirementsHash = await state.zkapp!.verifiedRequirementsHash.fetch();
-    return JSON.stringify(currentRequirementsHash!.toJSON());
+    const currentNum = await state.zkapp!.verifiedRequirementsHash.fetch();
+    return JSON.stringify(currentNum!.toJSON());
   },
   createPublishReportTransaction: async (args: { report: Report }) => {
     const transaction = await Mina.transaction(() => {
