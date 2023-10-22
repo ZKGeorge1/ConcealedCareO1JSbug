@@ -22,7 +22,6 @@ import styles from '../../../ui/src/styles/Home.module.css';
 
 const transactionFee = 100_000_000;
 
-
 export default function NewReport() {
   const [state, setState] = useState({
     zkappWorkerClient: null as null | ZkappWorkerClient,
@@ -77,7 +76,7 @@ export default function NewReport() {
 
         console.log('checking if account exists...');
 
-        const res = await zkappWorkerClient.fetchAccount({
+        const res = await fetchAccount({
           publicKey: publicKey!,
         });
         const accountExists = res.error != null;
@@ -95,7 +94,7 @@ export default function NewReport() {
 
         console.log('Getting zkApp state...');
         await zkappWorkerClient.fetchAccount({ publicKey: zkappPublicKey });
-        const currentNum = await zkappWorkerClient.getNum();
+        const currentNum = await zkappWorkerClient.getRequirementsHash();
         console.log('current state:', currentNum.toString());
 
         setState({
@@ -105,7 +104,6 @@ export default function NewReport() {
           hasBeenSetup: true,
           publicKey,
           zkappPublicKey,
-          currentNum,
           accountExists
         });
       }
@@ -141,21 +139,22 @@ export default function NewReport() {
     })();
   }, [state.hasBeenSetup]);
 
-  const onSendTransaction = async () => {
+  async function publishReport(report: Report) {
     setState({ ...state, creatingTransaction: true });
     console.log('Sending a transaction...');
 
     await state.zkappWorkerClient!.fetchAccount({ publicKey: state.publicKey! });
 
-    await state.zkappWorkerClient!.createPublishReportTransaction(report);
+   await state.zkappWorkerClient!.createPublishReportTransaction(reportFromJson(form1output));
+    
         
     myLog('Creating proof...');
     await state.zkappWorkerClient!.proveTransaction();
 
-        myLog('Retrieving transaction JSON...');
-        const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
+    myLog('Retrieving transaction JSON...');
+    const transactionJSON = await state.zkappWorkerClient!.getTransactionJSON();
 
-        myLog('Initiating send transaction...');
+    myLog('Initiating send transaction...');
         const { hash } = await (window as any).mina.sendTransaction({
             transaction: transactionJSON,
             feePayer: {
@@ -173,18 +172,15 @@ export default function NewReport() {
     
   
   async function publishAccomProof(report: Report, requirements: Requirements) {
-    doShowOverlay()
+    setState({ ...state, creatingTransaction: true });
+     console.log('Publishing accommodation proof...');
 
-    myLog('Publishing accommodation proof...');
-
-    await state.zkappWorkerClient!.fetchAccount({
+     await fetchAccount({
       publicKey: state.publicKey!,
     });
 
-    try {
-
-      myLog('creating transaction...');
-      await state.zkappWorkerClient!.createPublishAccomProofTransaction(report, requirements);
+    myLog('creating transaction...');
+      await  state.zkappWorkerClient!.createPublishAccomProofTransaction(report, requirements);
 
       myLog('creating proof...');
       await state.zkappWorkerClient!.proveTransaction();
@@ -200,10 +196,6 @@ export default function NewReport() {
           memo: '',
         },
       });
-
-    } catch (e) {
-      alert('failed to generate proof: ' + e)
-    }
 
     myLog(
       'See transaction at https://berkeley.minaexplorer.com/transaction/' + hash

@@ -18,13 +18,17 @@ export function hashPatientId(inputStr: string) {
 }
 
 export function stringToNumber(dateString: string): number {
-  // Remove all non-numeric characters using a regular expression
   const numericString = dateString.replace(/\D/g, '');
-
-  // Convert the resulting string to a number
   const number = parseInt(numericString, 10);
 
+  if (isNaN(number)) {
+     throw new Error("Invalid input string for conversion to number");
+  }
+
   return number;
+ // Remove all non-numeric characters using a regular expression
+ // Convert the resulting string to a number
+
 }
 
 export function myParseBool(input: boolean | string): boolean {

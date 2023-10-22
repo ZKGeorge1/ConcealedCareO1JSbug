@@ -8,7 +8,6 @@ import type {
 import { Report, Requirements } from '../../../contracts/src/ConcealedCare';
 
 export default class ZkappWorkerClient {
-  getNum: any;
   
   // ---------------------------------------------------------------------------------------
   
